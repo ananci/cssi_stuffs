@@ -27,6 +27,10 @@ import json
 import urllib
 import random
 import logging # Can you figure out what this does?
+import jinja2
+
+template_loader = jinja2.FileSystemLoader(searchpath="./")
+template_env = jinja2.Environment(loader=template_loader)
 
 class MainPage(webapp2.RequestHandler):
     """Controller for any requests to '/'
@@ -92,8 +96,10 @@ class MemePage(webapp2.RequestHandler):
                 # self.response.write(json_dict)
 
                 # Randomly select one of the memes
-                random_meme = random.choice(json_dict['data']['memes'])['id']
-                logging.info('Chose the random meme: {id}'.format(
+                meme_list = json_dict['data']['memes']
+                random_meme_dict = random.choice(meme_list)
+                random_meme = random_meme_dict['id']
+                logging.info('Choose the random meme: {id}'.format(
                     id=random_meme))
                 # Uncomment below to see whether or not I'm actually
                 # getting a image that, like, works.
@@ -135,7 +141,7 @@ class MemePage(webapp2.RequestHandler):
                 payload=urllib.urlencode(caption_dict),
                 method=urlfetch.POST)
             # self.response.write(result.content)
-            
+
             logging.info('Recieved the following response: {resp}'.format(
                 resp=result.content))
             new_meme_dict = json.loads(result.content)
@@ -149,7 +155,79 @@ class MemePage(webapp2.RequestHandler):
                 'OH NOES Something went really wrong while '
                 'captioning the meme: {e}'.format(e=e))
 
+def get_memes():
+    """Gets random memes from imgflip.
+
+        returns:
+            list of dictionaries representing memes.
+    """
+    get_meme_url = 'https://api.imgflip.com/get_memes'
+
+    try:
+        logging.info('Trying to get the list of popular memes...')
+        result = urlfetch.fetch(get_meme_url)
+        if result.status_code == 200:
+            logging.info('Recieved the following response: {resp}'.format(
+                resp=result.content))
+            json_dict = json.loads(result.content)
+            return json_dict['data']['memes']
+        else:
+            return []
+    except urlfetch.Error as e:
+        return []
+    return []
+
+def create_captioned_meme(meme_type, top_text, bottom_text):
+    """Uses imgflip's API to create a captioned memeself.
+
+        args:
+            meme_type: str
+            top_text: str
+            bottom_text: str
+        returns:
+            dict of new meme data
+    """
+    caption_dict = {
+        'template_id': meme_type,
+        'username': 'nahkki',
+        'password': 'correct_horse_battery',
+        'text0': top_text,
+        'text1': bottom_text,
+    }
+    try:
+        caption_url = 'https://api.imgflip.com/caption_image'
+        result = urlfetch.fetch(
+            url=caption_url,
+            payload=urllib.urlencode(caption_dict),
+            method=urlfetch.POST)
+        return json.loads(result.content)
+    except Exception as e:
+        # I don't know what exceptions might happen
+        # so let's just catch all of them for now.
+        logging.info(str(e))
+
+
+class MemeMaker(webapp2.RequestHandler):
+    def get(self):
+        memes = get_memes()
+        data = {'memes': memes, 'meme_img': memes[2]['url']}
+        template = template_env.get_template('templates/home.html')
+        self.response.write(template.render(data))
+
+class MemeMade(webapp2.RequestHandler):
+    def post(self):
+        meme_type = self.request.get('meme-type')
+        top_text = self.request.get('user-first-ln')
+        bottom_text = self.request.get('user-second-ln')
+        meme_dict = create_captioned_meme(meme_type, top_text, bottom_text)
+
+        data = {'meme': meme_dict}
+        template = template_env.get_template('templates/result.html')
+        self.response.write(template.render(data))
+
 app = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/memes', MemePage),
+    ('/meme_maker', MemeMaker),
+    ('/meme_made', MemeMade),
 ], debug=True)

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Welcome!</title>
+  </head>
+  <body>
+    <h1>Meme Generator</h1>
+    <img height="100px" width="150px" src="{{ meme_img }}"/>
+    <h2>Welcome to my meme generator!</h2>
+    <form method=POST action="/meme_made">
+
+      Line 1 of meme:<br>
+      <input type="text" name="user-first-ln" value="First line of meme"><br>
+      Line 2 of meme:<br>
+      <input type="text" name="user-second-ln" value="Second line of meme"><br>
+
+      <select name="meme-type">
+        {% for meme in memes %}
+          <option value="{{ meme.id }}">{{ meme.name }}</option>
+        {% endfor %}
+      </select><br>
+      
+      <input type="submit" value="Go!">
+    </form>
+
+  </body>
+</html>
