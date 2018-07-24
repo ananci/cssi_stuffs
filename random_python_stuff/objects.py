@@ -37,7 +37,8 @@ class Person(object):
             n=self.name, a=self.age, c=self.cats)
         return anna_string
 
-    def give_birth(self, new_person)
+    def give_birth(self):
+        new_person = Person('..........')
         self.kids.append(new_person)
 
 anna = Person(

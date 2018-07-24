@@ -18,28 +18,29 @@
 #    i.e.  youtube.com/?v=blahblah
 
 import webapp2
+import json
+from google.appengine.api import urlfetch
 
-# dict = {'cat':'',
-# 'dog':'https://s3.amazonaws.com/cdn-origin-etr.akc.org/wp-content/uploads/2017/11/13001000/Beagle-On-White-01-400x267.jpg',
-# }
+imgflip_url = 'https://api.imgflip.com/get_memes'
+
 class MainPage(webapp2.RequestHandler):
     def get(self):
-        # Change this to do some fizzbuzzing
-        num = self.request.get('number')
-        txt = self._fizzbuzz(int(num))
-        self.response.headers['Content-Type'] = 'text/html'
-        self.response.write("<html><body><h1>Result: {txt}</h1></body></html>".format(
-            txt=txt))
+        try:
+            result = urlfetch.fetch(imgflip_url)
+            json_result = json.loads(result.content)
+            for meme in json_result.get('data').get('memes'):
+                url = meme.get('url')
+                caption = meme.get('name')
+                if result.status_code == 200:
+                    self.response.write("<img style='width: 250px' src='{img_url}'/>{caption}".format(
+                        img_url=url, caption=caption))
+                else:
+                    self.response.status_code = result.status_code
+        except urlfetch.Error:
+            logging.exception('Caught exception fetching url')
+            # self.response.headers['Content-Type'] = 'text/html'
 
-    def _fizzbuzz(self, num):
-        txt = ""
-        if num % 3 == 0:
-            txt += "fizz"
-        if num % 5 == 0:
-            txt += "buzz"
-        return txt
 
 app = webapp2.WSGIApplication([
-('/main', MainPage)
+('/', MainPage)
 ], debug=True)
-

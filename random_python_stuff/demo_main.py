@@ -9,7 +9,6 @@ def my_main_function():
     my_funcy_function('I AM BEING CALLED FROM INSIDE THE HOUSE!')
 
 def print_name():
-    print(__name__)
 
 print('I AM OUTSIDE MAIN')
 print_name()
