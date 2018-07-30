@@ -227,7 +227,7 @@ class MemeMade(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([
     ('/', MainPage),
-    ('/memes', MemePage),
-    ('/meme_maker', MemeMaker),
+    ('/memes', MemePage),  # Original meme page demo with random memes and captioning
+    ('/meme_maker', MemeMaker),  # meme maker v2 with inputs and meme selection
     ('/meme_made', MemeMade),
 ], debug=True)
